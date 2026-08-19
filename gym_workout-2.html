@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fitness Elite: The Gym Is Yours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000}
+
+#game{
+  width:100%;height:100vh;min-height:600px;
+  position:relative;overflow:hidden;
+  font-family:'Inter',sans-serif;
+  background:#0a0d12
+}
+
+.screen{position:absolute;inset:0;display:none;opacity:0;transition:opacity 0.5s}
+.screen.active{display:block;opacity:1}
+
+.bg-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center top
+}
+.char-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center top;
+  transition:opacity 0.4s
+}
+.char-img.fade{opacity:0}
+
+.vignette{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 30%, transparent 40%, rgba(5,8,15,0.45) 100%),
+    linear-gradient(to top, rgba(5,8,15,0.95) 0%, rgba(5,8,15,0.55) 20%, rgba(5,8,15,0.08) 42%, transparent 58%)
+}
+
+/* ── MENU — manhwa / webtoon comic theme ── */
+.menu-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(105deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.6) 46%, rgba(10,10,10,0.15) 100%)
+}
+.menu-overlay::after{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(#ffffff 1.3px,transparent 1.3px);
+  background-size:8px 8px;
+  opacity:0.05;mix-blend-mode:overlay
+}
+.menu-content{
+  position:absolute;left:6%;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column
+}
+.menu-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.4rem,7vw,4.6rem);
+  color:#f4efe8;font-weight:400;
+  letter-spacing:0.02em;line-height:0.95;
+  text-shadow:4px 4px 0 #6b9e94
+}
+.menu-title em{
+  font-style:normal;color:#0a0a0a;
+  background:#a4c3d2;
+  font-size:0.26em;display:inline-block;
+  letter-spacing:0.16em;text-transform:uppercase;
+  font-family:'Inter',sans-serif;font-weight:800;
+  margin-top:14px;padding:5px 14px 3px;
+  border:3px solid #0a0a0a;
+  box-shadow:3px 3px 0 #0a0a0a;
+  transform:rotate(-1.5deg)
+}
+.menu-divider{width:64px;height:5px;background:#6b9e94;border:2px solid #0a0a0a;margin:26px 0}
+.menu-btns{display:flex;flex-direction:column;gap:9px}
+.mbtn{
+  background:#f4efe8;border:3px solid #0a0a0a;
+  box-shadow:4px 4px 0 #0a0a0a;
+  cursor:pointer;text-align:left;
+  padding:10px 20px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(0.95rem,2vw,1.15rem);
+  font-weight:400;letter-spacing:0.08em;text-transform:uppercase;
+  color:#0a0a0a;
+  transition:all 0.14s;
+  display:flex;align-items:center;gap:14px;
+  width:fit-content;min-width:190px
+}
+.mbtn::before{
+  content:'▸';font-size:0.9em;
+  color:#6b9e94;
+  flex-shrink:0;
+  transition:transform 0.14s
+}
+.mbtn:hover{transform:translate(-3px,-3px);box-shadow:7px 7px 0 #0a0a0a;background:#fff6ea}
+.mbtn:hover::before{transform:translateX(3px)}
+.mbtn:active{transform:translate(0,0);box-shadow:2px 2px 0 #0a0a0a}
+.mbtn.primary{background:#6b9e94;color:#0a0a0a}
+.mbtn.primary::before{color:#0a0a0a}
+.mbtn.primary:hover{background:#82b3a9}
+.menu-footer{
+  position:absolute;bottom:18px;right:24px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:12px;letter-spacing:0.16em;
+  color:#f4efe8;text-transform:uppercase;
+  text-shadow:2px 2px 0 #0a0a0a
+}
+
+
+/* ── MODAL OVERLAY (Settings / Gallery / Achievements) ── */
+.modal-screen{
+  position:absolute;inset:0;
+  background:rgba(10,10,10,0.7);
+  display:flex;align-items:center;justify-content:center;
+  z-index:50;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.3s
+}
+.modal-screen.open{opacity:1;pointer-events:all}
+.modal-card{
+  width:min(88%,480px);
+  background:#f4efe8;
+  border:3px solid #0a0a0a;
+  box-shadow:8px 8px 0 #0a0a0a;
+  padding:30px 32px 26px;
+  position:relative
+}
+.modal-close{
+  position:absolute;top:12px;right:14px;
+  background:#6b9e94;border:2px solid #0a0a0a;
+  padding:4px 10px;cursor:pointer;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+  color:#0a0a0a;
+  transition:all 0.15s
+}
+.modal-close:hover{transform:translate(-2px,-2px);box-shadow:2px 2px 0 #0a0a0a}
+.modal-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2rem;color:#0a0a0a;
+  font-weight:400;margin-bottom:4px;letter-spacing:0.02em
+}
+.modal-sub{
+  font-family:'Inter',sans-serif;
+  font-size:10px;letter-spacing:0.24em;text-transform:uppercase;
+  color:#2f5650;margin-bottom:18px;font-weight:700
+}
+.modal-divider{
+  width:100%;height:3px;
+  background:#0a0a0a;
+  margin-bottom:18px
+}
+.modal-body{
+  font-size:0.85rem;color:#151515;
+  line-height:1.9;font-weight:500
+}
+.modal-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;
+  border-bottom:2px dashed rgba(10,10,10,0.15)
+}
+.modal-row:last-child{border-bottom:none}
+.modal-row-label{
+  font-size:0.85rem;color:#151515;
+  font-weight:700;letter-spacing:0.01em
+}
+.modal-row-value{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:0.95rem;color:#2f5650;
+  font-weight:400;letter-spacing:0.04em
+}
+.toggle{
+  width:38px;height:20px;border-radius:0;
+  background:#e4dcce;
+  border:2px solid #0a0a0a;
+  cursor:pointer;position:relative;
+  transition:background 0.2s
+}
+.toggle.on{background:#6b9e94}
+.toggle::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:12px;height:12px;border-radius:0;
+  background:#0a0a0a;
+  transition:left 0.2s,background 0.2s
+}
+.toggle.on::after{left:20px;background:#0a0a0a}
+.ach-item{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:12px 0;border-bottom:2px dashed rgba(10,10,10,0.15)
+}
+.ach-item:last-child{border-bottom:none}
+.ach-icon{
+  width:34px;height:34px;border-radius:0;
+  background:#e4dcce;
+  border:2px solid #0a0a0a;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+  color:#0a0a0a
+}
+.ach-icon.unlocked{
+  background:#a4c3d2;
+  border-color:#0a0a0a;
+  color:#0a0a0a
+}
+.ach-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1rem;color:#0a0a0a;
+  font-weight:400;margin-bottom:3px;letter-spacing:0.02em
+}
+.ach-desc{
+  font-size:0.73rem;color:#4a4a4a;
+  font-weight:500;line-height:1.5
+}
+.gallery-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:10px;margin-top:4px
+}
+.gallery-thumb{
+  aspect-ratio:2/3;
+  background:#e4dcce;
+  border:2px solid #0a0a0a;
+  border-radius:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;letter-spacing:0.2em;text-transform:uppercase;
+  color:#0a0a0a;
+  overflow:hidden;position:relative
+}
+.gallery-thumb img{
+  width:100%;height:100%;object-fit:cover;object-position:center top;
+  opacity:0.92
+}
+.gallery-thumb.locked::after{
+  content:'locked';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;letter-spacing:0.2em;text-transform:uppercase;
+  color:#f4efe8;
+  background:rgba(10,10,10,0.72)
+  background:rgba(5,8,15,0.55)
+}
+
+/* ── LOBBY ── */
+.lobby-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top, rgba(5,8,15,0.97) 0%, rgba(5,8,15,0.55) 26%, rgba(5,8,15,0.1) 52%, transparent 100%)
+}
+.vn-panel{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:0 5% 16px;
+  display:flex;flex-direction:column;align-items:flex-start
+}
+
+/* narrator box — manhwa / webtoon comic style, matches dialogue box */
+.narr-wrap{width:min(92%,1100px);position:relative}
+.narr-tag{
+  position:absolute;top:-24px;left:6px;z-index:3;
+  display:inline-flex;align-items:center;
+  padding:6px 20px 4px;
+  background:#a4c3d2;
+  border:3px solid #0a0a0a;
+  box-shadow:4px 4px 0 #0a0a0a;
+  transform:rotate(-1.5deg)
+}
+.narr-tag span{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:15px;letter-spacing:0.1em;text-transform:uppercase;
+  color:#0a0a0a;font-weight:400
+}
+.narr-box{
+  background:#f4efe8;
+  border:3px solid #0a0a0a;
+  padding:16px 20px 12px;
+  position:relative;
+  box-shadow:6px 6px 0 #0a0a0a;
+  overflow:hidden
+}
+.narr-box::before{
+  content:'';position:absolute;top:0;right:0;width:50px;height:50px;
+  background-image:radial-gradient(#0a0a0a 1.2px,transparent 1.2px);
+  background-size:6px 6px;
+  opacity:0.18;
+  clip-path:polygon(100% 0,0 0,100% 100%)
+}
+.narr-text{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(0.78rem,1.4vw,0.88rem);
+  color:#151515;
+  line-height:1.6;font-weight:600;min-height:30px;
+  position:relative;z-index:1
+}
+.narr-continue{display:flex;justify-content:flex-end;align-items:center;margin-top:8px;position:relative;z-index:1}
+.continue-btn{
+  background:#6b9e94;border:3px solid #0a0a0a;
+  box-shadow:3px 3px 0 #0a0a0a;
+  padding:6px 16px;cursor:pointer;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:12px;letter-spacing:0.08em;text-transform:uppercase;
+  color:#0a0a0a;
+  transition:all 0.12s;display:flex;align-items:center;gap:6px
+}
+.continue-btn::after{content:'›';font-size:14px;transition:transform 0.15s}
+.continue-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #0a0a0a;background:#82b3a9}
+.continue-btn:hover::after{transform:translateX(3px)}
+.continue-btn:active{transform:translate(0,0);box-shadow:2px 2px 0 #0a0a0a}
+
+/* ── GAMEPLAY HUD ── */
+.hud{
+  position:absolute;top:18px;right:18px;
+  display:flex;flex-direction:column;align-items:flex-end;gap:5px;
+  pointer-events:none
+}
+.hud-affection{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+  color:#f4efe8;
+  text-shadow:2px 2px 0 #0a0a0a;
+  display:flex;align-items:center;gap:8px
+}
+.hud-bar{width:80px;height:8px;background:#f4efe8;border:2px solid #0a0a0a;border-radius:0;overflow:hidden}
+.hud-fill{height:100%;width:0%;background:#6b9e94;border-radius:0;transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
+.hud-round{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:0.08em;color:#f4efe8;text-transform:uppercase;text-shadow:2px 2px 0 #0a0a0a}
+.hearts{display:flex;gap:5px}
+.hrt{width:8px;height:8px;border-radius:50%;background:#f4efe8;border:2px solid #0a0a0a;transition:background 0.4s}
+.hrt.on{background:#6b9e94}
+.emotion-tag{
+  position:absolute;top:18px;left:50%;transform:translateX(-50%);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:0.14em;text-transform:uppercase;
+  color:#f4efe8;text-shadow:2px 2px 0 #0a0a0a;pointer-events:none
+}
+
+/* dialogue box — manhwa / webtoon comic style */
+.dlg-wrap{width:min(92%,1100px);position:relative}
+.speaker-label{
+  position:absolute;top:-22px;left:6px;z-index:3;
+  display:inline-flex;align-items:center;
+  padding:6px 20px 4px;
+  background:#6b9e94;
+  border:3px solid #0a0a0a;
+  box-shadow:4px 4px 0 #0a0a0a;
+  transform:rotate(-1.5deg)
+}
+.speaker-label span{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:15px;letter-spacing:0.06em;
+  color:#0a0a0a;font-weight:400
+}
+.dlg-box{
+  background:#f4efe8;
+  border:3px solid #0a0a0a;
+  border-bottom:none;
+  padding:16px 24px 14px;
+  position:relative;
+  overflow:hidden
+}
+.dlg-box::before{
+  content:'';position:absolute;top:0;right:0;width:50px;height:50px;
+  background-image:radial-gradient(#0a0a0a 1.2px,transparent 1.2px);
+  background-size:6px 6px;
+  opacity:0.18;
+  clip-path:polygon(100% 0,0 0,100% 100%)
+}
+.dlg-text{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(0.78rem,1.4vw,0.88rem);
+  color:#151515;
+  line-height:1.55;min-height:32px;font-weight:600;
+  position:relative;z-index:1
+}
+.reaction{
+  font-size:clamp(0.66rem,1.1vw,0.72rem);
+  color:#3d6b63;
+  font-style:italic;margin-top:6px;min-height:13px;
+  padding-left:9px;border-left:3px solid #6b9e94;
+  font-family:'Playfair Display',serif;font-weight:600;
+  position:relative;z-index:1
+}
+
+/* choices — fused flush under the dialogue box, one continuous panel */
+.choices-box{
+  width:min(92%,1100px);
+  background:#f4efe8;
+  border:3px solid #0a0a0a;
+  margin-top:0;
+  padding:0;
+  box-shadow:6px 6px 0 #0a0a0a;
+  display:flex;flex-direction:column
+}
+.choices-hint{display:none}
+.ch-btn{
+  width:100%;padding:9px 16px;margin-bottom:0;
+  background:none;
+  border:none;
+  border-bottom:2px dashed rgba(10,10,10,0.14);
+  box-shadow:none;
+  cursor:pointer;text-align:left;
+  font-family:'Inter',sans-serif;
+  font-size:clamp(0.7rem,1.3vw,0.8rem);
+  font-weight:700;
+  color:#151515;
+  line-height:1.4;
+  transition:background 0.12s,padding-left 0.12s;
+  display:flex;align-items:center;gap:11px
+}
+.ch-btn:last-child{border-bottom:none}
+.ch-num{
+  flex-shrink:0;width:20px;height:20px;
+  border:2px solid #0a0a0a;
+  background:#6b9e94;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:12px;color:#0a0a0a;
+  transition:all 0.12s
+}
+.ch-txt{flex:1}
+.ch-btn:hover{
+  background:rgba(107,158,148,0.14);
+  padding-left:22px
+}
+.ch-btn:hover .ch-num{background:#0a0a0a;color:#6b9e94;border-color:#6b9e94}
+.ch-btn:active{background:rgba(107,158,148,0.24)}
+.ch-btn:disabled{opacity:0.35;cursor:not-allowed;padding-left:16px}
+.ch-btn:disabled:hover{background:none}
+
+/* ── END — manhwa / webtoon comic style ── */
+.end-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.55) 38%, rgba(10,10,10,0.1) 100%)
+}
+.end-content{
+  position:absolute;bottom:0;left:0;right:0;
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 24px 44px;text-align:center
+}
+.end-tag{
+  font-family:'Inter',sans-serif;
+  font-size:11px;letter-spacing:0.22em;text-transform:uppercase;
+  color:#0a0a0a;font-weight:800;margin-bottom:16px;
+  background:#a4c3d2;border:3px solid #0a0a0a;
+  box-shadow:4px 4px 0 #0a0a0a;
+  padding:6px 18px;transform:rotate(-1.5deg)
+}
+.end-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.6rem,7vw,4.6rem);color:#f4efe8;
+  font-weight:400;letter-spacing:0.02em;margin-bottom:10px;
+  text-shadow:5px 5px 0 #6b9e94
+}
+.end-score{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(1rem,2vw,1.2rem);color:#6b9e94;
+  letter-spacing:0.14em;text-transform:uppercase;margin-bottom:20px;font-weight:400;
+  text-shadow:2px 2px 0 #0a0a0a
+}
+.end-text{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(0.8rem,1.55vw,0.88rem);color:#f4efe8;
+  line-height:1.7;max-width:480px;font-weight:500;margin-bottom:1.8rem;
+  background:rgba(10,10,10,0.55);border:2px solid rgba(244,239,232,0.2);
+  padding:14px 20px
+}
+.end-replay{
+  background:#6b9e94;border:3px solid #0a0a0a;
+  box-shadow:5px 5px 0 #0a0a0a;
+  padding:11px 40px;cursor:pointer;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:15px;letter-spacing:0.14em;text-transform:uppercase;
+  color:#0a0a0a;transition:all 0.14s
+}
+.end-replay:hover{transform:translate(-3px,-3px);box-shadow:8px 8px 0 #0a0a0a;background:#82b3a9}
+.end-replay:active{transform:translate(0,0);box-shadow:2px 2px 0 #0a0a0a}
+</style>
+
+</head>
+<body>
+<div id="game">
+
+  <!-- MENU -->
+  <div id="menu-screen" class="screen active">
+    <img src="https://raw.githubusercontent.com/aerablooms/gym_workout/main/rest_face.png" class="bg-img" alt="">
+    <div class="menu-overlay"></div>
+    <div class="menu-content">
+      <div class="menu-title">
+        Fitness Elite
+        <em>The Gym Is Yours</em>
+      </div>
+      <div class="menu-divider"></div>
+      <div class="menu-btns">
+        <button class="mbtn primary" onclick="goToLobby()">Play</button>
+        <button class="mbtn" onclick="openModal('settings-modal')">Settings</button>
+        <button class="mbtn" onclick="openModal('gallery-modal')">Gallery</button>
+        <button class="mbtn" onclick="openModal('achievements-modal')">Achievements</button>
+        <button class="mbtn" onclick="confirmExit()">Exit</button>
+      </div>
+    </div>
+    <div class="menu-footer">8 rounds &nbsp;·&nbsp; 4 endings</div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="modal-screen">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('settings-modal')">Close ×</button>
+      <div class="modal-title">Settings</div>
+      <div class="modal-sub">Preferences</div>
+      <div class="modal-divider"></div>
+      <div class="modal-row">
+        <span class="modal-row-label">Text speed</span>
+        <span class="modal-row-value" id="speed-label">Normal</span>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Auto-advance</span>
+        <div class="toggle" id="toggle-auto" onclick="toggleSetting(this,'toggle-auto')"></div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Music</span>
+        <div class="toggle on" id="toggle-music" onclick="toggleSetting(this,'toggle-music')"></div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Sound effects</span>
+        <div class="toggle on" id="toggle-sfx" onclick="toggleSetting(this,'toggle-sfx')"></div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-row-label">Version</span>
+        <span class="modal-row-value">1.0.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GALLERY MODAL -->
+  <div id="gallery-modal" class="modal-screen">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('gallery-modal')">Close ×</button>
+      <div class="modal-title">Gallery</div>
+      <div class="modal-sub">Ethan's expressions</div>
+      <div class="modal-divider"></div>
+      <div class="gallery-grid">
+        <div class="gallery-thumb">
+          <img src="https://raw.githubusercontent.com/aerablooms/gym_workout/main/rest_face.png" alt="Calm">
+        </div>
+        <div class="gallery-thumb">
+          <img src="https://raw.githubusercontent.com/aerablooms/gym_workout/main/smily_face.png" alt="Happy">
+        </div>
+        <div class="gallery-thumb">
+          <img src="https://raw.githubusercontent.com/aerablooms/gym_workout/main/sad_face.png" alt="Sad">
+        </div>
+        <div class="gallery-thumb">
+          <img src="https://raw.githubusercontent.com/aerablooms/gym_workout/main/sulky_face.png" alt="Sulky">
+        </div>
+        <div class="gallery-thumb">
+          <img src="https://raw.githubusercontent.com/aerablooms/gym_workout/main/badmood_face.jpeg" alt="Upset">
+        </div>
+        <div class="gallery-thumb locked"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENTS MODAL -->
+  <div id="achievements-modal" class="modal-screen">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('achievements-modal')">Close ×</button>
+      <div class="modal-title">Achievements</div>
+      <div class="modal-sub">Your progress</div>
+      <div class="modal-divider"></div>
+      <div class="ach-item">
+        <div class="ach-icon unlocked">★</div>
+        <div>
+          <div class="ach-name">First Steps</div>
+          <div class="ach-desc">Played through your first session at Fitness Elite.</div>
+        </div>
+      </div>
+      <div class="ach-item">
+        <div class="ach-icon">♡</div>
+        <div>
+          <div class="ach-name">He Said Yes</div>
+          <div class="ach-desc">Reached 75% affection or higher and earned a date with Ethan.</div>
+        </div>
+      </div>
+      <div class="ach-item">
+        <div class="ach-icon">✦</div>
+        <div>
+          <div class="ach-name">Perfect Read</div>
+          <div class="ach-desc">Made the best possible choice in every single round.</div>
+        </div>
+      </div>
+      <div class="ach-item">
+        <div class="ach-icon">◈</div>
+        <div>
+          <div class="ach-name">All Endings</div>
+          <div class="ach-desc">Discovered all four possible outcomes in one playthrough session.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOBBY -->
+  <div id="lobby-screen" class="screen">
+    <img id="lobby-bg" src="" class="bg-img" alt="">
+    <div class="lobby-overlay"></div>
+    <div class="vn-panel">
+      <div class="narr-wrap">
+        <div class="narr-tag"><span>Narrator</span></div>
+        <div class="narr-box">
+          <div class="narr-text" id="narrator-text"></div>
+          <div class="narr-continue">
+            <button class="continue-btn" id="narrator-btn" onclick="advanceNarrator()">Continue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game-screen" class="screen">
+    <img id="char-img" src="" class="char-img" alt="Ethan">
+    <div class="vignette"></div>
+    <div class="hud">
+      <div class="hud-affection">
+        <div class="hud-bar"><div class="hud-fill" id="aff-bar"></div></div>
+        <span id="aff-num" style="display:none">0%</span>
+      </div>
+      <div class="hud-round" id="round-ind">Round 1 / 5</div>
+      <div class="hearts" id="hearts"></div>
+    </div>
+    <div class="emotion-tag" id="emotion-tag" style="display:none">—</div>
+    <div class="vn-panel">
+      <div class="dlg-wrap">
+        <div class="speaker-label"><span>Ethan</span></div>
+        <div class="dlg-box">
+          <div class="dlg-text" id="dlg-text">...</div>
+          <div class="reaction" id="reaction" style="display:none"></div>
+        </div>
+      </div>
+      <div class="choices-box">
+        <div id="choices"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- END -->
+  <div id="end-screen" class="screen">
+    <img id="end-bg" src="" class="bg-img" alt="">
+    <div class="end-overlay"></div>
+    <div class="end-content">
+      <div class="end-tag" id="end-tag">Result</div>
+      <div class="end-title" id="end-title">Game Over</div>
+      <div class="end-score" id="end-score">0% affection</div>
+      <div class="end-text" id="end-text"></div>
+      <button class="end-replay" onclick="restartGame()">Play Again</button>
+    </div>
+  </div>
+
+</div>
+<script>
+const IMG={
+  lobby:"https://raw.githubusercontent.com/aerablooms/gym_workout/main/gym_lobby.jpeg",
+  rest:"https://raw.githubusercontent.com/aerablooms/gym_workout/main/rest_face.png",
+  smile:"https://raw.githubusercontent.com/aerablooms/gym_workout/main/smily_face.png",
+  sad:"https://raw.githubusercontent.com/aerablooms/gym_workout/main/sad_face.png",
+  bad:"https://raw.githubusercontent.com/aerablooms/gym_workout/main/badmood_face.jpeg",
+  sulky:"https://raw.githubusercontent.com/aerablooms/gym_workout/main/sulky_face.png"
+};
+
+const NARR=[
+  "Welcome to Fitness Elite — one of the city's most prestigious gyms, with floor-to-ceiling windows overlooking the skyline.",
+  "You've just checked in at the front desk when you notice him across the lobby. His name is Ethan — a regular here, known for his quiet intensity and rare, disarming smile.",
+  "He's between sets right now, resting near the weight floor. He seems approachable today — but Ethan isn't someone who opens up easily. He values sincerity above all else.",
+  "Your goal: win his heart across 8 rounds of conversation. Every choice you make shapes how he sees you. Read the room. Choose wisely.",
+  null
+];
+
+const ROUNDS=[
+  {line:"Oh hey. You new here? I haven't seen you around before...",choices:[
+    {text:"First time at this location. You look like you know your way around — any tips for a newcomer?",mood:"smile",delta:18,reaction:"He looks pleased you asked. He enjoys sharing what he knows."},
+    {text:"Kind of. I come here to focus, not really to chat.",mood:"sulky",delta:-14,reaction:"His expression cools. Too blunt for a first impression."},
+    {text:"Yeah, first time here. Been training elsewhere for a while though.",mood:"rest",delta:7,reaction:"He nods. Neutral, but he's paying attention."}
+  ]},
+  {line:"What's your usual routine? You look like you know what you're doing.",choices:[
+    {text:"Mostly strength training, but I mix it up. You?",mood:"smile",delta:16,reaction:"He relaxes a little. He likes people who actually have a plan."},
+    {text:"I just do whatever I feel like that day.",mood:"rest",delta:5,reaction:"He raises an eyebrow. Not impressed, but not put off either."},
+    {text:"Why are you asking? Is this some kind of evaluation?",mood:"bad",delta:-16,reaction:"He blinks. That came out way more defensive than the question deserved."}
+  ]},
+  {line:"What brings you in today? Cardio day, or are you here to lift?",choices:[
+    {text:"Actually looking for a lifting partner. Want to spot me?",mood:"smile",delta:20,reaction:"His eyes light up. He loves a direct, confident ask."},
+    {text:"Just burning off some stress. Life's been a lot lately.",mood:"sad",delta:5,reaction:"He looks empathetic but isn't quite sure how to respond."},
+    {text:"Why do you want to know?",mood:"bad",delta:-18,reaction:"He frowns. Way too defensive for a casual question."}
+  ]},
+  {line:"I've been training for a competition. It's been pretty tough, honestly...",choices:[
+    {text:"That sounds intense. What's keeping you going through it?",mood:"smile",delta:22,reaction:"He pauses — like no one's ever asked him that before. A slow smile."},
+    {text:"Competitions are overrated. You should just train for yourself.",mood:"sulky",delta:-10,reaction:"He narrows his eyes. That came off preachy."},
+    {text:"Oh really? I've thought about entering one too.",mood:"rest",delta:9,reaction:"Mildly interested. Not a home run, but it's something."}
+  ]},
+  {line:"Do you ever come here just to clear your head? Not even to work out, just... think?",choices:[
+    {text:"Honestly, yes. There's something about the energy in here that helps me reset.",mood:"smile",delta:22,reaction:"He looks surprised — and relieved. Like you just said something he couldn't put into words himself."},
+    {text:"Not really. I'm pretty goal-driven when I'm here.",mood:"rest",delta:7,reaction:"He nods slowly. Practical. He respects it, even if it doesn't land."},
+    {text:"That sounds kind of aimless, doesn't it?",mood:"sulky",delta:-12,reaction:"He goes quiet. You just made him feel a little silly for asking."}
+  ]},
+  {line:"I don't really open up to people here much. Gym crowds can be kind of shallow.",choices:[
+    {text:"I get that completely. I'd rather have one real conversation than ten surface-level ones.",mood:"smile",delta:25,reaction:"He looks at you differently now. Something just shifted."},
+    {text:"Sounds like you've been burned before. What happened?",mood:"sad",delta:11,reaction:"He hesitates — but seems to appreciate the curiosity."},
+    {text:"Well, I'm not really looking for anything deep either.",mood:"bad",delta:-22,reaction:"He goes cold. You may have just shut that door."}
+  ]},
+  {line:"You know, you're actually really easy to talk to. That's... kind of rare for me.",choices:[
+    {text:"I was just thinking the same thing about you.",mood:"smile",delta:26,reaction:"A quiet smile crosses his face. He wasn't expecting that."},
+    {text:"I'm sure plenty of people here would talk to you if you gave them a chance.",mood:"rest",delta:8,reaction:"He tilts his head — appreciative, but a little deflated. That wasn't quite the response he was hoping for."},
+    {text:"I'm honestly surprised. You seemed pretty closed off at first.",mood:"sulky",delta:-8,reaction:"He stiffens slightly. Even if it's true, that stung a little."}
+  ]},
+  {line:"Hey... I don't usually do this. But do you want to grab a protein shake after? There's a good spot nearby.",choices:[
+    {text:"I'd love that. I feel like we've barely scratched the surface.",mood:"smile",delta:28,reaction:"He breaks into a full smile. Exactly what he needed to hear."},
+    {text:"Sure, but I can't stay too long — I have plans after.",mood:"rest",delta:5,reaction:"He smiles politely, but looks a little deflated."},
+    {text:"I'm pretty tired, honestly. Maybe another time?",mood:"sulky",delta:-16,reaction:"His face falls. You left him hanging at the finish line."}
+  ]}
+];
+
+let aff=0,round=0,narStep=0,goodRounds=0;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.classList.remove('active');s.style.display='none';
+  });
+  const el=document.getElementById(id);
+  el.style.display='block';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('active')));
+}
+
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+}
+function toggleSetting(el){
+  el.classList.toggle('on');
+}
+function confirmExit(){
+  if(confirm('Exit Fitness Elite?')) window.close();
+}
+
+function goToLobby(){
+  document.getElementById('lobby-bg').src=IMG.lobby;
+  narStep=0;showScreen('lobby-screen');showNarr();
+}
+
+function showNarr(){
+  const btn=document.getElementById('narrator-btn');
+  btn.textContent=narStep===NARR.length-2?'Enter the gym':'Continue';
+  typeText(document.getElementById('narrator-text'),NARR[narStep]);
+}
+function advanceNarrator(){
+  narStep++;
+  if(narStep>=NARR.length-1)startGame();
+  else showNarr();
+}
+
+let _typeIv=null;
+function typeText(el,text){
+  if(_typeIv){clearInterval(_typeIv);_typeIv=null;}
+  el.textContent='';let i=0;
+  _typeIv=setInterval(()=>{
+    if(i<text.length){el.textContent+=text[i++];}
+    else{clearInterval(_typeIv);_typeIv=null;}
+  },18);
+}
+
+function startGame(){
+  aff=0;round=0;goodRounds=0;
+  showScreen('game-screen');
+  setFace('rest',false);updateHUD();renderRound();
+}
+
+function updateHUD(){
+  const pct=Math.min(100,Math.max(0,aff));
+  document.getElementById('aff-bar').style.width=pct+'%';
+  document.getElementById('aff-num').textContent=Math.round(pct)+'%';
+  document.getElementById('round-ind').textContent='Round '+(round+1)+' / 8';
+  const h=document.getElementById('hearts');h.innerHTML='';
+  for(let i=0;i<8;i++){
+    const d=document.createElement('div');
+    d.className='hrt'+(i<goodRounds?' on':'');
+    h.appendChild(d);
+  }
+}
+
+const EMOLABELS={rest:'Calm',smile:'Happy',sad:'Touched',bad:'Upset',sulky:'Distant'};
+function setFace(mood,animate=true){
+  const img=document.getElementById('char-img');
+  document.getElementById('emotion-tag').textContent=EMOLABELS[mood]||'Calm';
+  if(animate){
+    img.classList.add('fade');
+    setTimeout(()=>{img.src=IMG[mood];img.classList.remove('fade');},380);
+  } else {
+    img.src=IMG[mood];
+  }
+}
+
+function renderRound(){
+  if(round>=ROUNDS.length){endGame();return;}
+  const r=ROUNDS[round];
+  typeText(document.getElementById('dlg-text'),r.line);
+  document.getElementById('reaction').textContent='';
+  setFace('rest');
+  const el=document.getElementById('choices');el.innerHTML='';
+  r.choices.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='ch-btn';
+    btn.innerHTML='<span class="ch-num">'+(i+1)+'</span><span class="ch-txt"></span>';
+    btn.querySelector('.ch-txt').textContent=c.text;
+    btn.onclick=()=>pick(i);
+    el.appendChild(btn);
+  });
+  updateHUD();
+}
+
+function pick(idx){
+  const c=ROUNDS[round].choices[idx];
+  document.querySelectorAll('.ch-btn').forEach(b=>b.disabled=true);
+  aff=Math.max(0,Math.min(100,aff+c.delta));
+  if(c.delta>0)goodRounds++;
+  setFace(c.mood);
+  document.getElementById('reaction').textContent=c.reaction;
+  updateHUD();
+  setTimeout(()=>{round++;renderRound();},2000);
+}
+
+function endGame(){
+  const pct=Math.round(Math.max(0,Math.min(100,aff)));
+  let face,title,tag,text;
+  if(pct>=75){
+    face=IMG.smile;title='He Said Yes';tag='A date is born';
+    text="Ethan couldn't stop smiling as you headed out into the city together. Something real sparked between you today — and somehow you both sense this is just the beginning.";
+  } else if(pct>=45){
+    face=IMG.rest;title='Almost There';tag='Warm but uncertain';
+    text="Ethan appreciated your company — he just wasn't quite ready to call it a date. He saved your number though. Maybe next time the timing lines up a little better.";
+  } else if(pct>=20){
+    face=IMG.sad;title='He Drifted Away';tag='Missed connections';
+    text="Ethan was polite, but the spark never quite ignited. He gave a brief nod and disappeared through the weight room doors. There's always a next session.";
+  } else {
+    face=IMG.bad;title='Crashed & Burned';tag='Better luck next time';
+    text="That didn't go as planned. Ethan looked genuinely unsettled by the end of your conversation. Time to rethink the approach — he's worth another shot.";
+  }
+  document.getElementById('end-bg').src=face;
+  document.getElementById('end-title').textContent=title;
+  document.getElementById('end-tag').textContent=tag;
+  document.getElementById('end-score').textContent=pct+'% affection';
+  document.getElementById('end-text').textContent=text;
+  showScreen('end-screen');
+}
+
+function restartGame(){showScreen('menu-screen');}
+</script>
+</body>
+</html>
